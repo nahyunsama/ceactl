@@ -12,6 +12,17 @@ Cisco UCS/MDS API playground written in Go.
 - Concurrent polling experiments
 - Go-Based CLI playground
 
+## Build
+```Bash
+go build -o ceactl main.go
+```
+
+## Run
+```Bash
+ceactl mds inventory
+ceactl ucsm blades
+```
+
 ## TODO
 
 - [ ] MDS API login
