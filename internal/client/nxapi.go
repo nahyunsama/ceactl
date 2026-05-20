@@ -1,5 +1,3 @@
-// NX-API Client
-
 package client
 
 import (
