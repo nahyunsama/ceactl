@@ -14,13 +14,14 @@ Cisco UCS/MDS API playground written in Go.
 
 ## Build
 ```Bash
-go build -o ceactl main.go
+go mod tidy
+go build -o ceactl.exe ./cmd/app
 ```
 
 ## Run
 ```Bash
-ceactl mds inventory
-ceactl ucsm blades
+ceactl.exe mds inventory
+ceactl.exe ucsm blades
 ```
 
 ## TODO
