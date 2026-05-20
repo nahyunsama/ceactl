@@ -1,3 +1,5 @@
+// NX-API Response Model
+
 package model
 
 type NXResponse struct {

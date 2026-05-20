@@ -1,6 +1,6 @@
 // MDS Login and print inventory
 // error handing, logging, and configuration management
-//
+// Entry point of the application
 
 package main
 
