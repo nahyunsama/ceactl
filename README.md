@@ -18,13 +18,23 @@ go mod tidy
 go build -o ceactl.exe ./cmd/app
 ```
 
-## Run (Now)
-```Bash
-go run ./cmd/app
-```
-
-## Run (Future)
+## Run
 ```Bash
 ceactl.exe mds inventory
 ceactl.exe ucsm blades
 ```
+
+## TODO
+
+- [ ] MDS API login
+- [ ] UCS aaaLogin
+- [ ] MDS inventory collection
+- [ ] UCS computeBlade query
+- [ ] Config file support
+- [ ] Concurrent device polling
+
+## Goals
+
+- Learn Go through infrastructure APIs
+- Explore Cisco UCS object models
+- Build a simple enterprise-style CLI tool
