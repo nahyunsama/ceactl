@@ -1,10 +1,13 @@
 // MDS Login and print inventory
+// error handing, logging, and configuration management
+//
 
 package main
 
 import (
 	"bytes"
 	"crypto/tls"
+	"encoding/json"
 	"fmt"
 	"io"
 	"log"
@@ -13,6 +16,21 @@ import (
 
 	"github.com/joho/godotenv"
 )
+
+type NXResponse struct {
+	InsAPI struct {
+		Outputs struct {
+			Output struct {
+				Body Body `json:"body"`
+			} `json:"output"`
+		} `json:"outputs"`
+	} `json:"ins_api"`
+}
+
+type Body struct {
+	HostName string `json:"host_name"`
+	Version  string `json:"sys_ver_str"`
+}
 
 const insecureTLS = true
 
@@ -28,11 +46,6 @@ func main() {
 	switchPW := os.Getenv("switch_PW")
 	switchIP := os.Getenv("switch_IP")
 	switchPort := os.Getenv("switch_Port")
-
-	// fmt.Printf("Switch ID: %s\n", switchID)
-	// fmt.Printf("Switch Password: %s\n", switchPW)
-	// fmt.Printf("Switch IP: %s\n", switchIP)
-	// fmt.Printf("Switch Port: %s\n", switchPort)
 
 	url := "https://" + switchIP + ":" + switchPort + "/ins"
 
@@ -82,5 +95,13 @@ func main() {
 		panic(err)
 	}
 
-	fmt.Printf("Response: %s\n", string(body))
+	var nxResponse NXResponse
+	if err := json.Unmarshal(body, &nxResponse); err != nil {
+		log.Fatal("Error unmarshaling JSON response")
+	}
+
+	switchInfo := nxResponse.InsAPI.Outputs.Output.Body
+
+	fmt.Printf("Host Name: %s\n", switchInfo.HostName)
+	fmt.Printf("Version: %s\n", switchInfo.Version)
 }

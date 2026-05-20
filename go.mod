@@ -2,4 +2,4 @@ module github.com/nahyunsama/ceactl
 
 go 1.26.3
 
-require github.com/joho/godotenv v1.5.1 // indirect
+require github.com/joho/godotenv v1.5.1
