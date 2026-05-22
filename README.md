@@ -27,9 +27,10 @@ ceactl.exe ucsm blades
 ## TODO
 
 - Add MDS Command
+- Add Common Flag (--host, --user, --password, --port, --insecure etc.)
 - Add UCSM API Call & Parse function
 - Add UCSM Command
 
 ### Long-Term (someday)
 - Add Local Ollama API function
-- Analysis with Local Ollama Model
+- Analysis with Local Ollama Model  
