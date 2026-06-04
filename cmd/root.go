@@ -4,6 +4,7 @@ import (
 	"os"
 
 	"github.com/nahyunsama/ceactl/cmd/mds"
+	"github.com/nahyunsama/ceactl/cmd/ucsm"
 	"github.com/spf13/cobra"
 )
 
@@ -14,6 +15,7 @@ var rootCmd = &cobra.Command{
 
 func init() {
 	rootCmd.AddCommand(mds.NewCommand())
+	rootCmd.AddCommand(ucsm.NewCommand())
 }
 
 func Execute() {
