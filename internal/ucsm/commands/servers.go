@@ -14,6 +14,9 @@ func GetServers(ctx context.Context, cfg config.Config) ([]receiver.Server, erro
 	if err := client.Login(ctx, cfg.UCSMID, cfg.UCSMPW); err != nil {
 		return nil, err
 	}
+	defer func() {
+		_ = client.Logout(ctx)
+	}()
 
 	data, err := client.ResolveClass(ctx, "computeItem")
 	if err != nil {
