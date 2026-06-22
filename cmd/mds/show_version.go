@@ -10,12 +10,12 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func ShowVersionCommand() *cobra.Command {
+func ShowVersionCommand(opts *commandOptions) *cobra.Command {
 	return &cobra.Command{
 		Use:   "version",
 		Short: "Show MDS Firmware Version",
 		Run: func(cmd *cobra.Command, args []string) {
-			cfg, err := config.LoadConfig()
+			cfg, err := config.LoadConfig(opts.configPath, opts.deviceName)
 			if err != nil {
 				log.Fatalf("Failed to load config: %v", err)
 			}

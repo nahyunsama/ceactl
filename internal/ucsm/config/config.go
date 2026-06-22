@@ -1,11 +1,6 @@
 package config
 
-import (
-	"fmt"
-	"os"
-
-	"github.com/joho/godotenv"
-)
+import appconfig "github.com/nahyunsama/ceactl/internal/config"
 
 type Config struct {
 	UCSMID      string
@@ -15,21 +10,17 @@ type Config struct {
 	InsecureTLS bool
 }
 
-func LoadConfig() (Config, error) {
-	if err := godotenv.Load(); err != nil {
-		return Config{}, fmt.Errorf("error loading .env file: %w", err)
+func LoadConfig(configPath, deviceName string) (Config, error) {
+	device, err := appconfig.LoadDevice(configPath, deviceName, "ucsm")
+	if err != nil {
+		return Config{}, err
 	}
 
-	cfg := Config{
-		UCSMID:      os.Getenv("UCSM_ID"),
-		UCSMPW:      os.Getenv("UCSM_PW"),
-		UCSMIP:      os.Getenv("UCSM_IP"),
-		UCSMPort:    os.Getenv("UCSM_Port"),
-		InsecureTLS: true,
-	}
-	if cfg.UCSMID == "" || cfg.UCSMPW == "" || cfg.UCSMIP == "" || cfg.UCSMPort == "" {
-		return Config{}, fmt.Errorf("missing required environment variables")
-	}
-
-	return cfg, nil
+	return Config{
+		UCSMID:      device.Username,
+		UCSMPW:      device.Password,
+		UCSMIP:      device.Host,
+		UCSMPort:    device.Port,
+		InsecureTLS: device.InsecureTLS,
+	}, nil
 }

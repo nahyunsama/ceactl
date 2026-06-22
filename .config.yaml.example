@@ -1,0 +1,20 @@
+devices:
+  mds-lab:
+    type: mds
+    host: 192.0.2.10
+    port: "8443"
+    username: admin
+    password: change-me
+    insecure_tls: true
+
+  ucsm-lab:
+    type: ucsm
+    host: 192.0.2.20
+    port: "443"
+    username: admin
+    password: change-me
+    insecure_tls: true
+
+ollama:
+  base_url: http://localhost:11434
+  model: llama3.1
