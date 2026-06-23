@@ -3,10 +3,10 @@ package config
 import appconfig "github.com/nahyunsama/ceactl/internal/config"
 
 type Config struct {
-	SwitchID    string
-	SwitchPW    string
 	SwitchIP    string
 	SwitchPort  string
+	Username    string
+	Password    string
 	InsecureTLS bool
 	Verbose     bool
 }
@@ -18,10 +18,10 @@ func LoadConfig(configPath, deviceName string, verbose bool) (Config, error) {
 	}
 
 	return Config{
-		SwitchID:    device.Username,
-		SwitchPW:    device.Password,
 		SwitchIP:    device.Host,
 		SwitchPort:  device.Port,
+		Username:    device.Username,
+		Password:    device.Password,
 		InsecureTLS: device.InsecureTLS,
 		Verbose:     verbose,
 	}, nil
