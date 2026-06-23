@@ -3,6 +3,8 @@ package transceiver
 import (
 	"context"
 	"encoding/xml"
+	"fmt"
+	"os"
 )
 
 type resolveClassRequest struct {
@@ -13,6 +15,9 @@ type resolveClassRequest struct {
 }
 
 func (c *Client) ResolveClass(ctx context.Context, classID string) ([]byte, error) {
+	if c.Verbose {
+		fmt.Fprintf(os.Stderr, "[verbose] resolve class: %s\n", classID)
+	}
 	return c.PostXML(ctx, resolveClassRequest{
 		Cookie:         c.Cookie,
 		ClassID:        classID,

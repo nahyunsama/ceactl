@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/xml"
 	"fmt"
+	"os"
 )
 
 type loginRequest struct {
@@ -31,6 +32,9 @@ type logoutResponse struct {
 }
 
 func (c *Client) Login(ctx context.Context, user, password string) error {
+	if c.Verbose {
+		fmt.Fprintf(os.Stderr, "[verbose] login: %s\n", c.BaseURL)
+	}
 	data, err := c.PostXML(ctx, loginRequest{InName: user, InPassword: password})
 	if err != nil {
 		return err
@@ -46,6 +50,10 @@ func (c *Client) Login(ctx context.Context, user, password string) error {
 	}
 
 	c.Cookie = resp.OutCookie
+
+	if c.Verbose {
+		fmt.Fprintf(os.Stderr, "[verbose] session established, (cookie: %s...)\n", c.Cookie[:8])
+	}
 	return nil
 }
 
@@ -54,6 +62,9 @@ func (c *Client) Logout(ctx context.Context) error {
 		return nil
 	}
 
+	if c.Verbose {
+		fmt.Fprintf(os.Stderr, "[verbose] logout: %s\n", c.BaseURL)
+	}
 	data, err := c.PostXML(ctx, logoutRequest{InCookie: c.Cookie})
 	if err != nil {
 		return err
@@ -66,6 +77,10 @@ func (c *Client) Logout(ctx context.Context) error {
 
 	if resp.ErrorCode != "" {
 		return fmt.Errorf("logout failed: %s", resp.ErrorDescr)
+	}
+
+	if c.Verbose {
+		fmt.Fprintf(os.Stderr, "[verbose] session ended\n")
 	}
 
 	c.Cookie = ""
