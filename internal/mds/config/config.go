@@ -8,9 +8,10 @@ type Config struct {
 	SwitchIP    string
 	SwitchPort  string
 	InsecureTLS bool
+	Verbose     bool
 }
 
-func LoadConfig(configPath, deviceName string) (Config, error) {
+func LoadConfig(configPath, deviceName string, verbose bool) (Config, error) {
 	device, err := appconfig.LoadDevice(configPath, deviceName, "mds")
 	if err != nil {
 		return Config{}, err
@@ -22,5 +23,6 @@ func LoadConfig(configPath, deviceName string) (Config, error) {
 		SwitchIP:    device.Host,
 		SwitchPort:  device.Port,
 		InsecureTLS: device.InsecureTLS,
+		Verbose:     verbose,
 	}, nil
 }

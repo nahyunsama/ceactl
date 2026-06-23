@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
 
 	"github.com/nahyunsama/ceactl/internal/mds/config"
 )
@@ -22,6 +23,10 @@ func SendRequest(ctx context.Context, cfg config.Config, payload []byte) ([]byte
 	req.Header.Set("Content-Type", "application/json")
 
 	client := NewClient(cfg.InsecureTLS)
+
+	if cfg.Verbose {
+		fmt.Fprintf(os.Stderr, "[verbose] sending request: %s %s\n", req.Method, req.URL)
+	}
 
 	resp, err := client.Do(req)
 	if err != nil {
