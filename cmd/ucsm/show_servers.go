@@ -15,7 +15,7 @@ func ShowServersCommand(opts *commandOptions) *cobra.Command {
 		Use:   "servers",
 		Short: "Show UCSM Servers",
 		Run: func(cmd *cobra.Command, args []string) {
-			cfg, err := config.LoadConfig(opts.configPath, opts.deviceName)
+			cfg, err := config.LoadConfig(opts.configPath, opts.deviceName, opts.verbose)
 			if err != nil {
 				log.Fatalf("Failed to load config: %v", err)
 			}

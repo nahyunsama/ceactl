@@ -8,9 +8,10 @@ type Config struct {
 	UCSMIP      string
 	UCSMPort    string
 	InsecureTLS bool
+	Verbose     bool
 }
 
-func LoadConfig(configPath, deviceName string) (Config, error) {
+func LoadConfig(configPath, deviceName string, verbose bool) (Config, error) {
 	device, err := appconfig.LoadDevice(configPath, deviceName, "ucsm")
 	if err != nil {
 		return Config{}, err
@@ -22,5 +23,6 @@ func LoadConfig(configPath, deviceName string) (Config, error) {
 		UCSMIP:      device.Host,
 		UCSMPort:    device.Port,
 		InsecureTLS: device.InsecureTLS,
+		Verbose:     verbose,
 	}, nil
 }

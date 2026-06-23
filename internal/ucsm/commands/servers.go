@@ -9,7 +9,7 @@ import (
 )
 
 func GetServers(ctx context.Context, cfg config.Config) ([]receiver.Server, error) {
-	client := transceiver.NewClient(cfg.UCSMIP, cfg.UCSMPort, cfg.InsecureTLS)
+	client := transceiver.NewClient(cfg.UCSMIP, cfg.UCSMPort, cfg.InsecureTLS, cfg.Verbose)
 
 	if err := client.Login(ctx, cfg.UCSMID, cfg.UCSMPW); err != nil {
 		return nil, err

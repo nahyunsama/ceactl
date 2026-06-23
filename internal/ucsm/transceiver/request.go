@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
 )
 
 func (c *Client) PostXML(ctx context.Context, payload any) ([]byte, error) {
@@ -21,6 +22,10 @@ func (c *Client) PostXML(ctx context.Context, payload any) ([]byte, error) {
 	}
 
 	req.Header.Set("content-type", "application/x-www-form-urlencoded")
+
+	if c.Verbose {
+		fmt.Fprintf(os.Stderr, "[verbose] sending request: %s %s\n", req.Method, c.BaseURL)
+	}
 
 	resp, err := c.HTTP.Do(req)
 	if err != nil {
