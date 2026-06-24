@@ -15,7 +15,7 @@ func GetServers(ctx context.Context, cfg config.Config) ([]receiver.Server, erro
 		return nil, err
 	}
 	defer func() {
-		_ = client.Logout(ctx)
+		_ = client.Logout(context.Background())
 	}()
 
 	data, err := client.ResolveClass(ctx, "computeItem")
