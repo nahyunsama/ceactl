@@ -60,6 +60,7 @@ ceactl.exe ucsm blades
 - Credential migrate .env to config.yml with Manual Password type like SSH
 - Add output format option (`--output json`)
 - Add result to save a file
+- Add MDS Config Command with comfirm
 
 ### Long-Term (someday)
 - Add Local Ollama API function
