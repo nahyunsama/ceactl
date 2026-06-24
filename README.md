@@ -12,6 +12,32 @@ Cisco UCS/MDS API playground written in Go.
 - Concurrent polling experiments
 - Go-Based CLI playground
 
+## Project Structure
+
+CeaCtl/
+├── main.go
+├── cmd/
+│   ├── root.go
+│   ├── mds/
+│   │   ├── mds.go            # MDS command entry point, shared flags
+│   │   └── show_version.go   # mds version command
+│   └── ucsm/
+│       ├── ucsm.go           # UCSM command entry point, shared flags
+│       └── show_servers.go   # ucsm servers command
+└── internal/
+    ├── config/
+    │   └── config_load.go    # YAML parsing, device selection
+    ├── mds/
+    │   ├── config/           # MDS-specific configuration
+    │   ├── transceiver/      # HTTP client, NX-API requests
+    │   ├── receiver/         # JSON response parsing
+    │   └── commands/         # Business logic
+    └── ucsm/
+        ├── config/           # UCSM-specific configuration
+        ├── transceiver/      # HTTP client, XML session/requests
+        ├── receiver/         # XML response parsing
+        └── commands/         # Business logic
+
 ## Build
 ```Bash
 go mod tidy
