@@ -26,6 +26,7 @@ func ShowVersionCommand(opts *commandOptions) *cobra.Command {
 
 			fmt.Printf("Host Name: %s\n", info.HostName)
 			fmt.Printf("Version: %s\n", info.Version)
+			fmt.Printf("Uptime : %d days %02d:%02d:%02d\n", info.UptimeDays, info.UptimeHrs, info.UptimeMins, info.UptimeSecs)
 			return nil
 		},
 	}

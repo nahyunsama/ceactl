@@ -11,8 +11,12 @@ type VersionResponse struct {
 }
 
 type VersionBody struct {
-	HostName string `json:"host_name"`
-	Version  string `json:"sys_ver_str"`
+	HostName   string `json:"host_name"`
+	Version    string `json:"sys_ver_str"`
+	UptimeDays int    `json:"kern_uptm_days"`
+	UptimeHrs  int    `json:"kern_uptm_hrs"`
+	UptimeMins int    `json:"kern_uptm_mins"`
+	UptimeSecs int    `json:"kern_uptm_secs"`
 }
 
 type InventoryResponse struct {
