@@ -21,6 +21,7 @@ func NewCommand() *cobra.Command {
 	cmd.PersistentFlags().BoolVarP(&opts.verbose, "verbose", "v", false, "enable verbose output")
 
 	cmd.AddCommand(ShowVersionCommand(&opts))
+	cmd.AddCommand(ShowInventoryCommand(&opts))
 
 	return cmd
 }

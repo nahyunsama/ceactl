@@ -10,9 +10,9 @@ import (
 	"github.com/nahyunsama/ceactl/internal/mds/transceiver"
 )
 
-func GetVersion(ctx context.Context, cfg config.Config) (receiver.VersionBody, error) {
+func GetInventory(ctx context.Context, cfg config.Config) (receiver.InventoryBody, error) {
 	if cfg.Verbose {
-		fmt.Fprintf(os.Stderr, "[verbose] running command: show version\n")
+		fmt.Fprintf(os.Stderr, "[verbose] running command: show inventory\n")
 	}
 
 	client := transceiver.NewClient(cfg.SwitchIP, cfg.SwitchPort, cfg.Username, cfg.Password, cfg.InsecureTLS, cfg.Verbose)
@@ -23,14 +23,14 @@ func GetVersion(ctx context.Context, cfg config.Config) (receiver.VersionBody, e
 				"type": "cli_show",
 				"chunk": "0",
 				"sid": "1",
-				"input": "show version",
+				"input": "show inventory",
 				"output_format": "json"
 			}
 	}`))
 
 	if err != nil {
-		return receiver.VersionBody{}, err
+		return receiver.InventoryBody{}, err
 	}
 
-	return receiver.ParseVersionResponse(data)
+	return receiver.ParseInventoryResponse(data)
 }
