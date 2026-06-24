@@ -14,6 +14,7 @@ Cisco UCS/MDS API playground written in Go.
 
 ## Project Structure
 
+```
 CeaCtl/
 ├── main.go
 ├── cmd/
@@ -37,6 +38,7 @@ CeaCtl/
         ├── transceiver/      # HTTP client, XML session/requests
         ├── receiver/         # XML response parsing
         └── commands/         # Business logic
+```
 
 ## Build
 ```Bash
