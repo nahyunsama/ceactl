@@ -52,7 +52,11 @@ func (c *Client) Login(ctx context.Context, user, password string) error {
 	c.Cookie = resp.OutCookie
 
 	if c.Verbose {
-		fmt.Fprintf(os.Stderr, "[verbose] session established, (cookie: %s...)\n", c.Cookie[:8])
+		preview := c.Cookie
+		if len(preview) > 8 {
+			preview = preview[:8]
+		}
+		fmt.Fprintf(os.Stderr, "[verbose] session established, (cookie: %s...)\n", preview)
 	}
 	return nil
 }
