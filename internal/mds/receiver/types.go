@@ -31,7 +31,7 @@ type InventoryResponse struct {
 
 type InventoryItem struct {
 	Name      string `json:"name"`
-	ProductId string `json:"productid"`
+	ProductID string `json:"productid"`
 	SerialNum string `json:"serialnum"`
 }
 

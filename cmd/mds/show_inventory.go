@@ -29,7 +29,7 @@ func ShowInventoryCommand(opts *commandOptions) *cobra.Command {
 			w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
 			fmt.Fprintf(w, "NAME\tPRODUCT ID\tSERIAL NUM\n")
 			for _, item := range info.TableInv.RowInv {
-				fmt.Fprintf(w, "%s\t%s\t%s\n", item.Name, item.ProductId, item.SerialNum)
+				fmt.Fprintf(w, "%s\t%s\t%s\n", item.Name, item.ProductID, item.SerialNum)
 			}
 			w.Flush()
 
