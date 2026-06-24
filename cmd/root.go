@@ -9,8 +9,9 @@ import (
 )
 
 var rootCmd = &cobra.Command{
-	Use:   "ceactl",
-	Short: "Cisco Enterprise API Control CLI",
+	Use:          "ceactl",
+	Short:        "Cisco Enterprise API Control CLI",
+	SilenceUsage: true,
 }
 
 func init() {
