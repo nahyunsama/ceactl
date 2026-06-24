@@ -58,7 +58,6 @@ ceactl.exe ucsm blades
 - Add UCSM Command
 - Add Common Flag (--host, --user, --password, --port, --insecure etc.)
 - Credential migrate .env to config.yml with Manual Password type like SSH
-- Improve error message for config and device selection
 - Add output format option (`--output json`)
 - Add result to save a file
 
