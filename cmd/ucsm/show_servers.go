@@ -1,7 +1,6 @@
 package ucsm
 
 import (
-	"context"
 	"fmt"
 
 	"github.com/nahyunsama/ceactl/internal/ucsm/commands"
@@ -19,7 +18,7 @@ func ShowServersCommand(opts *commandOptions) *cobra.Command {
 				return fmt.Errorf("failed to load config: %v", err)
 			}
 
-			servers, err := commands.GetServers(context.Background(), cfg)
+			servers, err := commands.GetServers(cmd.Context(), cfg)
 			if err != nil {
 				return fmt.Errorf("failed to get servers: %v", err)
 			}

@@ -1,7 +1,6 @@
 package mds
 
 import (
-	"context"
 	"fmt"
 
 	"github.com/nahyunsama/ceactl/internal/mds/commands"
@@ -19,7 +18,7 @@ func ShowVersionCommand(opts *commandOptions) *cobra.Command {
 				return fmt.Errorf("failed to load config: %v", err)
 			}
 
-			info, err := commands.GetVersion(context.Background(), cfg)
+			info, err := commands.GetVersion(cmd.Context(), cfg)
 			if err != nil {
 				return fmt.Errorf("failed to get version: %v", err)
 			}

@@ -1,7 +1,6 @@
 package mds
 
 import (
-	"context"
 	"fmt"
 	"os"
 	"text/tabwriter"
@@ -21,7 +20,7 @@ func ShowInventoryCommand(opts *commandOptions) *cobra.Command {
 				return fmt.Errorf("failed to load config: %v", err)
 			}
 
-			info, err := commands.GetInventory(context.Background(), cfg)
+			info, err := commands.GetInventory(cmd.Context(), cfg)
 			if err != nil {
 				return fmt.Errorf("failed to get inventory: %v", err)
 			}
