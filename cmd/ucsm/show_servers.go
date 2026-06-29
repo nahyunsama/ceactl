@@ -12,6 +12,7 @@ func ShowServersCommand(opts *commandOptions) *cobra.Command {
 	return &cobra.Command{
 		Use:   "servers",
 		Short: "Show UCSM Servers",
+		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cfg, err := config.LoadConfig(opts.configPath, opts.deviceName, opts.verbose)
 			if err != nil {

@@ -14,6 +14,7 @@ func ShowInventoryCommand(opts *commandOptions) *cobra.Command {
 	return &cobra.Command{
 		Use:   "inventory",
 		Short: "Show MDS Inventory",
+		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cfg, err := config.LoadConfig(opts.configPath, opts.deviceName, opts.verbose)
 			if err != nil {

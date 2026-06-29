@@ -12,6 +12,7 @@ func ShowVersionCommand(opts *commandOptions) *cobra.Command {
 	return &cobra.Command{
 		Use:   "version",
 		Short: "Show MDS Firmware Version",
+		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cfg, err := config.LoadConfig(opts.configPath, opts.deviceName, opts.verbose)
 			if err != nil {
