@@ -31,7 +31,9 @@ func ShowInventoryCommand(opts *commandOptions) *cobra.Command {
 			for _, item := range info.TableInv.RowInv {
 				fmt.Fprintf(w, "%s\t%s\t%s\n", item.Name, item.ProductID, item.SerialNum)
 			}
-			w.Flush()
+			if err := w.Flush(); err != nil {
+				return err
+			}
 
 			return nil
 		},
