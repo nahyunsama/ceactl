@@ -60,7 +60,10 @@ ceactl.exe ucsm servers
 - Credential migrate .env to config.yml with Manual Password type like SSH
 - Add output format option (`--output json`)
 - Add result to save a file
-- Add MDS Config Command with comfirm
+- Add MDS Config Command with comfirm (Like Add Zone and zoneset)
+- Add Unit Test
+- NX-API Common Helper
+- API Level Error Parsing(NX-API code/msg, UCSM errorCode check)
 
 ### Long-Term (someday)
 - Add Local Ollama API function
