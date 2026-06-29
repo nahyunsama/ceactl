@@ -3,6 +3,7 @@ package transceiver
 import (
 	"crypto/tls"
 	"net/http"
+	"time"
 )
 
 type Client struct {
@@ -19,6 +20,7 @@ func NewClient(host, port, username, password string, insecureTLS bool, verbose 
 		Username: username,
 		Password: password,
 		HTTP: &http.Client{
+			Timeout: 30 * time.Second,
 			Transport: &http.Transport{
 				TLSClientConfig: &tls.Config{InsecureSkipVerify: insecureTLS},
 			},
