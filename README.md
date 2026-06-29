@@ -49,7 +49,7 @@ go build -o ceactl.exe main.go
 ## Run
 ```Bash
 ceactl.exe mds inventory
-ceactl.exe ucsm blades
+ceactl.exe ucsm servers
 ```
 
 ## TODO

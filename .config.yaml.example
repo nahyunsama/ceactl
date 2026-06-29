@@ -15,6 +15,6 @@ devices:
     password: change-me
     insecure_tls: true
 
-ollama:
-  base_url: http://localhost:11434
-  model: llama3.1
+#ollama:
+#  base_url: http://localhost:11434
+#  model: llama3.1
