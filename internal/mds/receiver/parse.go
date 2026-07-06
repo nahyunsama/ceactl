@@ -17,3 +17,11 @@ func ParseInventoryResponse(data []byte) (InventoryBody, error) {
 	}
 	return resp.InsAPI.Outputs.Output.Body, nil
 }
+
+func ParseLoggingResponse(data []byte) (string, error) {
+	var resp LoggingResponse
+	if err := json.Unmarshal(data, &resp); err != nil {
+		return "", err
+	}
+	return resp.InsAPI.Outputs.Output.Body, nil
+}
