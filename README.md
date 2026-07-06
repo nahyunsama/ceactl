@@ -58,7 +58,7 @@ Enable llm_analysis in .config.yaml
 ceactl.exe mds logs analyze --device <name> --from <date> --to <date>
 ceactl.exe mds logs analyze --device <name> --around <datetime> --window 2h
 ```
-ceactl 
+
 ```
 ## TODO
 
