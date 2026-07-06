@@ -7,6 +7,7 @@ import (
 	"regexp"
 	"sort"
 	"strings"
+	"text/tabwriter"
 	"time"
 )
 
@@ -164,16 +165,23 @@ func (r *Result) WriteReport(w io.Writer, maxUnparsed int) error {
 	}
 
 	write("=== 압축 결과: 그룹 %d개 (미분류 %d줄) ===\n\n", len(r.Groups), len(r.Unparsed))
+
+	tw := tabwriter.NewWriter(w, 0, 0, 2, ' ', 0)
 	for _, g := range r.Groups {
+		if err != nil {
+			break
+		}
 		var span string
 		if !g.First.Equal(g.Last) {
 			span = fmt.Sprintf("%s ~ %s", g.First.Format("15:04:05"), g.Last.Format("15:04:05"))
 		} else {
 			span = g.First.Format("15:04:05")
 		}
-		write("[sev%s] %s-%s  iface=%s vsan=%s  %d회  (%s)\n",
+		_, err = fmt.Fprintf(tw, "[sev%s] %s-%s\tiface=%s vsan=%s\t%d회\t(%s)\n",
 			g.Severity, g.Facility, g.Mnemonic, g.Iface, g.Vsan, g.Count, span)
-		write("    예시 원문: %s\n", g.Sample)
+	}
+	if err == nil {
+		err = tw.Flush()
 	}
 
 	write("\n=== 미분류 줄 (%d개) ===\n", len(r.Unparsed))

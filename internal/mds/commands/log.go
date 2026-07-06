@@ -19,7 +19,7 @@ func GetLoggingLogfile(ctx context.Context, cfg config.Config) (string, error) {
 	data, err := client.SendRequest(ctx, []byte(`{
 			"ins_api": {
 				"version": "1.0",
-				"type": "cli_show_ascii",
+				"type": "cli_show",
 				"chunk": "0",
 				"sid": "1",
 				"input": "show logging logfile",

@@ -45,7 +45,7 @@ type LoggingResponse struct {
 	InsAPI struct {
 		Outputs struct {
 			Output struct {
-				Body string `json:"body"`
+				ClientError string `json:"clierror"`
 			} `json:"output"`
 		} `json:"outputs"`
 	} `json:"ins_api"`

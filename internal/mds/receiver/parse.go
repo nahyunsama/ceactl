@@ -23,5 +23,5 @@ func ParseLoggingResponse(data []byte) (string, error) {
 	if err := json.Unmarshal(data, &resp); err != nil {
 		return "", err
 	}
-	return resp.InsAPI.Outputs.Output.Body, nil
+	return resp.InsAPI.Outputs.Output.ClientError, nil
 }
