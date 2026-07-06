@@ -15,6 +15,13 @@ devices:
     password: change-me
     insecure_tls: true
 
-#ollama:
-#  base_url: http://localhost:11434
-#  model: llama3.1
+llm_analysis:
+  enabled: false
+
+  backend: ollama
+  ollama:
+    endpoint: http://localhost:11434
+    model: gemma4:e2b
+  output:
+    translate: true
+    target_lang: ko_KR

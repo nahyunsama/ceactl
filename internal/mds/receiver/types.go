@@ -40,3 +40,13 @@ type InventoryBody struct {
 		RowInv []InventoryItem `json:"ROW_inv"`
 	} `json:"TABLE_inv"`
 }
+
+type LoggingResponse struct {
+	InsAPI struct {
+		Outputs struct {
+			Output struct {
+				ClientError string `json:"clierror"`
+			} `json:"output"`
+		} `json:"outputs"`
+	} `json:"ins_api"`
+}

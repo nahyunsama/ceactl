@@ -22,6 +22,7 @@ func NewCommand() *cobra.Command {
 
 	cmd.AddCommand(ShowVersionCommand(&opts))
 	cmd.AddCommand(ShowInventoryCommand(&opts))
+	cmd.AddCommand(LogsCommand(&opts))
 
 	return cmd
 }

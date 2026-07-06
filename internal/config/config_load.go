@@ -12,8 +12,8 @@ import (
 const DefaultPath = ".config.yaml"
 
 type File struct {
-	Devices map[string]Device `yaml:"devices"`
-	Ollama  Ollama            `yaml:"ollama"`
+	Devices     map[string]Device `yaml:"devices"`
+	LLMAnalysis LLMAnalysis       `yaml:"llm_analysis"`
 }
 
 type Device struct {
@@ -25,9 +25,13 @@ type Device struct {
 	InsecureTLS bool   `yaml:"insecure_tls"`
 }
 
+type LLMAnalysis struct {
+	Enabled bool `yaml:"enabled"`
+}
+
 type Ollama struct {
-	BaseURL string   `yaml:"base_url"`
-	Models  []string `yaml:"models"`
+	model    string `yaml:"model"`
+	endpoint string `yaml:"endpoint"`
 }
 
 func LoadDevice(path, name, deviceType string) (Device, error) {
