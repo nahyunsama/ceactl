@@ -2,8 +2,6 @@ package commands
 
 import (
 	"context"
-	"fmt"
-	"os"
 
 	"github.com/nahyunsama/ceactl/internal/mds/config"
 	"github.com/nahyunsama/ceactl/internal/mds/receiver"
@@ -11,23 +9,9 @@ import (
 )
 
 func GetInventory(ctx context.Context, cfg config.Config) (receiver.InventoryBody, error) {
-	if cfg.Verbose {
-		fmt.Fprintf(os.Stderr, "[verbose] running command: show inventory\n")
-	}
+	client := transceiver.NewClientFromConfig(cfg)
 
-	client := transceiver.NewClient(cfg.SwitchIP, cfg.SwitchPort, cfg.Username, cfg.Password, cfg.InsecureTLS, cfg.Verbose)
-
-	data, err := client.SendRequest(ctx, []byte(`{
-			"ins_api": {
-				"version": "1.0",
-				"type": "cli_show",
-				"chunk": "0",
-				"sid": "1",
-				"input": "show inventory",
-				"output_format": "json"
-			}
-	}`))
-
+	data, err := client.CLIShow(ctx, "show inventory")
 	if err != nil {
 		return receiver.InventoryBody{}, err
 	}

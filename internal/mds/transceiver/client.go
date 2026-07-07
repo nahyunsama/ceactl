@@ -4,6 +4,8 @@ import (
 	"crypto/tls"
 	"net/http"
 	"time"
+
+	"github.com/nahyunsama/ceactl/internal/mds/config"
 )
 
 type Client struct {
@@ -27,4 +29,8 @@ func NewClient(host, port, username, password string, insecureTLS bool, verbose 
 		},
 		Verbose: verbose,
 	}
+}
+
+func NewClientFromConfig(cfg config.Config) *Client {
+	return NewClient(cfg.SwitchIP, cfg.SwitchPort, cfg.Username, cfg.Password, cfg.InsecureTLS, cfg.Verbose)
 }

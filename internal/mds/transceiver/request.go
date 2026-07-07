@@ -3,11 +3,45 @@ package transceiver
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
 	"os"
 )
+
+type nxapiRequest struct {
+	InsAPI struct {
+		Version      string `json:"version"`
+		Type         string `json:"type"`
+		Chunk        string `json:"chunk"`
+		Sid          string `json:"sid"`
+		Input        string `json:"input"`
+		OutputFormat string `json:"output_format"`
+	} `json:"ins_api"`
+}
+
+// CLIShow runs a "show" command against the NX-API and returns the raw response body.
+func (c *Client) CLIShow(ctx context.Context, input string) ([]byte, error) {
+	if c.Verbose {
+		fmt.Fprintf(os.Stderr, "[verbose] running command: %s\n", input)
+	}
+
+	var req nxapiRequest
+	req.InsAPI.Version = "1.0"
+	req.InsAPI.Type = "cli_show"
+	req.InsAPI.Chunk = "0"
+	req.InsAPI.Sid = "1"
+	req.InsAPI.Input = input
+	req.InsAPI.OutputFormat = "json"
+
+	payload, err := json.Marshal(req)
+	if err != nil {
+		return nil, fmt.Errorf("failed to build nx-api request: %w", err)
+	}
+
+	return c.SendRequest(ctx, payload)
+}
 
 func (c *Client) SendRequest(ctx context.Context, payload []byte) ([]byte, error) {
 

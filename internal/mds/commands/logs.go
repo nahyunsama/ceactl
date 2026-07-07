@@ -8,13 +8,12 @@ import (
 	"github.com/nahyunsama/ceactl/internal/mds/transceiver"
 )
 
-func GetVersion(ctx context.Context, cfg config.Config) (receiver.VersionBody, error) {
+func GetLoggingLogfile(ctx context.Context, cfg config.Config) (string, error) {
 	client := transceiver.NewClientFromConfig(cfg)
 
-	data, err := client.CLIShow(ctx, "show version")
+	data, err := client.CLIShow(ctx, "show logging logfile")
 	if err != nil {
-		return receiver.VersionBody{}, err
+		return "", err
 	}
-
-	return receiver.ParseVersionResponse(data)
+	return receiver.ParseLoggingResponse(data)
 }
