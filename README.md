@@ -69,8 +69,6 @@ ceactl.exe mds logs analyze --device <name> --around <datetime> --window 2h
 - Add output format option (`--output json`)
 - Add result to save a file
 - Add MDS Config Command with comfirm (Like Add Zone and zoneset)
-- Add Unit Test
-- NX-API Common Helper
 - API Level Error Parsing(NX-API code/msg, UCSM errorCode check)
 
 ### Long-Term (someday)
