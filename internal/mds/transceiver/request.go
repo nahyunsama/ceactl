@@ -21,7 +21,6 @@ type nxapiRequest struct {
 	} `json:"ins_api"`
 }
 
-// CLIShow runs a "show" command against the NX-API and returns the raw response body.
 func (c *Client) CLIShow(ctx context.Context, input string) ([]byte, error) {
 	if c.Verbose {
 		fmt.Fprintf(os.Stderr, "[verbose] running command: %s\n", input)
