@@ -56,7 +56,7 @@ ceactl.exe ucsm servers
 Enable llm_analysis in .config.yaml
 ```Bash
 ceactl.exe mds logs analyze --device <name> --from <date> --to <date>
-ceactl.exe mds logs analyze --device <name> --around <datetime> --window 2h
+ceactl.exe mds logs analyze --device <name> --file /path/to/logfile.log
 ```
 
 ```
@@ -70,6 +70,7 @@ ceactl.exe mds logs analyze --device <name> --around <datetime> --window 2h
 - Add result to save a file
 - Add MDS Config Command with comfirm (Like Add Zone and zoneset)
 - API Level Error Parsing(NX-API code/msg, UCSM errorCode check)
+- Add mds logs analyze --around(base time) and --window(before and after) subcommand
 
 ### Long-Term (someday)
 - Add Local Ollama API function
