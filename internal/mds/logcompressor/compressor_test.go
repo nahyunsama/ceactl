@@ -111,6 +111,159 @@ func TestAnalyze_FromToFiltersOutOfRangeLines(t *testing.T) {
 	}
 }
 
+func TestParseTS(t *testing.T) {
+	tests := []struct {
+		name string
+		line string
+		want time.Time
+		ok   bool
+	}{
+		{
+			name: "valid timestamp at line start",
+			line: "2024 Jan 15 10:23:45 switch1 %PORT-5-IF_DOWN: Interface fc1/1 is down",
+			want: mustParseDay(t, "2024 Jan 15 10:23:45"),
+			ok:   true,
+		},
+		{
+			name: "timestamp not at line start",
+			line: "switch1 2024 Jan 15 10:23:45 %PORT-5-IF_DOWN: Interface fc1/1 is down",
+			ok:   false,
+		},
+		{
+			name: "regex matches but month name is invalid",
+			line: "2024 Xxx 15 10:23:45 switch1 message",
+			ok:   false,
+		},
+		{
+			name: "empty line",
+			line: "",
+			ok:   false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, ok := parseTS(tt.line)
+			if ok != tt.ok {
+				t.Fatalf("ok = %v, want %v", ok, tt.ok)
+			}
+			if ok && !got.Equal(tt.want) {
+				t.Errorf("got %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestParseMnemonic(t *testing.T) {
+	tests := []struct {
+		name         string
+		line         string
+		wantFacility string
+		wantSeverity string
+		wantMnemonic string
+		ok           bool
+	}{
+		{
+			name:         "valid mnemonic",
+			line:         "2024 Jan 15 10:23:45 switch1 %PORT-5-IF_DOWN: Interface fc1/1 is down",
+			wantFacility: "PORT",
+			wantSeverity: "5",
+			wantMnemonic: "IF_DOWN",
+			ok:           true,
+		},
+		{
+			name: "no mnemonic present",
+			line: "2024 Jan 15 10:23:45 switch1 plain log message",
+			ok:   false,
+		},
+		{
+			name: "lowercase does not match",
+			line: "2024 Jan 15 10:23:45 switch1 %port-5-if_down: interface fc1/1 is down",
+			ok:   false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			facility, severity, mnemonic, ok := parseMnemonic(tt.line)
+			if ok != tt.ok {
+				t.Fatalf("ok = %v, want %v", ok, tt.ok)
+			}
+			if !ok {
+				return
+			}
+			if facility != tt.wantFacility || severity != tt.wantSeverity || mnemonic != tt.wantMnemonic {
+				t.Errorf("got (%q, %q, %q), want (%q, %q, %q)",
+					facility, severity, mnemonic, tt.wantFacility, tt.wantSeverity, tt.wantMnemonic)
+			}
+		})
+	}
+}
+
+func TestParseInterface(t *testing.T) {
+	tests := []struct {
+		name string
+		line string
+		want string
+	}{
+		{
+			name: "comma-terminated interface",
+			line: "%PORT-5-IF_DOWN: Interface fc1/1, VSAN 100 is down",
+			want: "fc1/1",
+		},
+		{
+			name: "is-terminated interface without comma",
+			line: "%PORT-5-IF_DOWN: Interface mgmt0 is up",
+			want: "mgmt0",
+		},
+		{
+			name: "no interface mentioned",
+			line: "%PORT-5-IF_DOWN: some other message",
+			want: "-",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := parseInterface(tt.line); got != tt.want {
+				t.Errorf("got %q, want %q", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestParseVsan(t *testing.T) {
+	tests := []struct {
+		name string
+		line string
+		want string
+	}{
+		{
+			name: "vsan with space, uppercase",
+			line: "Interface fc1/1, VSAN 100 is down",
+			want: "100",
+		},
+		{
+			name: "vsan without space, lowercase",
+			line: "Interface fc1/1, vsan200 is down",
+			want: "200",
+		},
+		{
+			name: "no vsan mentioned",
+			line: "Interface fc1/1 is down",
+			want: "-",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := parseVsan(tt.line); got != tt.want {
+				t.Errorf("got %q, want %q", got, tt.want)
+			}
+		})
+	}
+}
+
 func TestAnalyze_GroupsOrderedByFirstOccurrence(t *testing.T) {
 	// Group with iface fc1/2 is scanned first, but its timestamp is later than
 	// the fc1/1 group's. The final result should still sort by First ascending.
