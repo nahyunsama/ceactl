@@ -10,6 +10,7 @@ import (
 	appconfig "github.com/nahyunsama/ceactl/internal/config"
 	"github.com/nahyunsama/ceactl/internal/mds/commands"
 	"github.com/nahyunsama/ceactl/internal/mds/config"
+	"github.com/nahyunsama/ceactl/internal/mds/llmanalysis"
 	"github.com/nahyunsama/ceactl/internal/mds/logcompressor"
 	"github.com/spf13/cobra"
 )
@@ -51,6 +52,7 @@ func LogsAnalyzeCommand(opts *commandOptions) *cobra.Command {
 			}
 
 			var reader io.Reader
+			device := opts.deviceName
 
 			if file != "" {
 				f, err := os.Open(file)
@@ -59,10 +61,16 @@ func LogsAnalyzeCommand(opts *commandOptions) *cobra.Command {
 				}
 				defer f.Close()
 				reader = f
+				if device == "" {
+					device = file
+				}
 			} else {
 				cfg, err := config.LoadConfig(opts.configPath, opts.deviceName, opts.verbose)
 				if err != nil {
 					return fmt.Errorf("failed to load config: %v", err)
+				}
+				if device == "" {
+					device = cfg.SwitchIP
 				}
 
 				body, err := commands.GetLoggingLogfile(cmd.Context(), cfg)
@@ -77,7 +85,27 @@ func LogsAnalyzeCommand(opts *commandOptions) *cobra.Command {
 				return fmt.Errorf("failed to analyze log: %v", err)
 			}
 
-			return result.WriteReport(os.Stdout, 10)
+			if err := result.WriteReport(os.Stdout, 10); err != nil {
+				return err
+			}
+
+			if cfgFile.LLMAnalysis.Backend != "ollama" {
+				return nil
+			}
+
+			userPrompt, err := llmanalysis.BuildUserPrompt(device, result)
+			if err != nil {
+				return fmt.Errorf("failed to build LLM analysis prompt: %v", err)
+			}
+
+			client := llmanalysis.NewClient(cfgFile.LLMAnalysis.Ollama.Endpoint, cfgFile.LLMAnalysis.Ollama.Model)
+			reply, err := client.Chat(cmd.Context(), llmanalysis.SystemPrompt, userPrompt)
+			if err != nil {
+				return fmt.Errorf("failed to get LLM analysis: %v", err)
+			}
+
+			_, err = fmt.Fprintf(os.Stdout, "\n=== LLM Analysis (%s) ===\n\n%s\n", cfgFile.LLMAnalysis.Ollama.Model, reply)
+			return err
 		},
 	}
 
