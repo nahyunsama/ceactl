@@ -17,11 +17,10 @@ devices:
 
 llm_analysis:
   enabled: false
-# backend ollama and output setting is planned
-#  backend: ollama
-#  ollama:
-#    endpoint: http://localhost:11434
-#    model: gemma4:e2b
-#  output:
-#    translate: true
-#    target_lang: ko_KR
+  backend: ollama
+  ollama:
+    endpoint: http://localhost:11434
+    model: gemma4:e2b
+  output:
+    translate: true
+    target_lang: ko_KR

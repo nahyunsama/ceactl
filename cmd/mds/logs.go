@@ -98,8 +98,14 @@ func LogsAnalyzeCommand(opts *commandOptions) *cobra.Command {
 				return fmt.Errorf("failed to build LLM analysis prompt: %v", err)
 			}
 
+			fmt.Fprintf(os.Stderr, "Requesting LLM analysis from %s (model: %s)...\n", cfgFile.LLMAnalysis.Ollama.Endpoint, cfgFile.LLMAnalysis.Ollama.Model)
+			done := make(chan struct{})
+			go reportElapsed(os.Stderr, done)
+
 			client := llmanalysis.NewClient(cfgFile.LLMAnalysis.Ollama.Endpoint, cfgFile.LLMAnalysis.Ollama.Model)
 			reply, err := client.Chat(cmd.Context(), llmanalysis.SystemPrompt, userPrompt)
+			close(done)
+			fmt.Fprintln(os.Stderr)
 			if err != nil {
 				return fmt.Errorf("failed to get LLM analysis: %v", err)
 			}
@@ -114,6 +120,24 @@ func LogsAnalyzeCommand(opts *commandOptions) *cobra.Command {
 	c.Flags().StringVar(&file, "file", "", "path to a local log file (skips device fetch)")
 
 	return c
+}
+
+// reportElapsed writes a "\r"-overwritten elapsed-time counter to w once per
+// second until done is closed, so a user waiting on a slow LLM call can see
+// the request hasn't stalled.
+func reportElapsed(w io.Writer, done <-chan struct{}) {
+	start := time.Now()
+	ticker := time.NewTicker(time.Second)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-done:
+			return
+		case <-ticker.C:
+			fmt.Fprintf(w, "\r  waiting... %-8s", time.Since(start).Round(time.Second))
+		}
+	}
 }
 
 func parseDayStart(s string) (time.Time, error) {

@@ -25,7 +25,7 @@ func NewClient(endpoint, model string) *Client {
 		Model:    model,
 		NumCtx:   defaultNumCtx,
 		HTTP: &http.Client{
-			Timeout: 120 * time.Second,
+			Timeout: 600 * time.Second,
 		},
 	}
 }
