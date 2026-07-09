@@ -53,13 +53,12 @@ ceactl.exe ucsm servers
 ```
 
 ## LLM LOG Analysis Beta
-Enable llm_analysis in .config.yaml
+Enable `llm_analysis` with `backend: ollama` in .config.yaml (see .config.yaml.example), then point `ollama.endpoint`/`ollama.model` at a running Ollama instance.
 ```Bash
 ceactl.exe mds logs analyze --device <name> --from <date> --to <date>
 ceactl.exe mds logs analyze --device <name> --file /path/to/logfile.log
 ```
 
-```
 ## TODO
 
 - Add MDS Command
@@ -71,7 +70,3 @@ ceactl.exe mds logs analyze --device <name> --file /path/to/logfile.log
 - Add MDS Config Command with comfirm (Like Add Zone and zoneset)
 - API Level Error Parsing(NX-API code/msg, UCSM errorCode check)
 - Add mds logs analyze --around(base time) and --window(before and after) subcommand
-
-### Long-Term (someday)
-- Add Local Ollama API function
-- Analysis with Local Ollama Model  
