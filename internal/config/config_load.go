@@ -26,12 +26,20 @@ type Device struct {
 }
 
 type LLMAnalysis struct {
-	Enabled bool `yaml:"enabled"`
+	Enabled bool         `yaml:"enabled"`
+	Backend string       `yaml:"backend"`
+	Ollama  OllamaConfig `yaml:"ollama"`
+	Output  OutputConfig `yaml:"output"`
 }
 
-type Ollama struct {
-	model    string `yaml:"model"`
-	endpoint string `yaml:"endpoint"`
+type OllamaConfig struct {
+	Endpoint string `yaml:"endpoint"`
+	Model    string `yaml:"model"`
+}
+
+type OutputConfig struct {
+	Translate  bool   `yaml:"translate"`
+	TargetLang string `yaml:"target_lang"`
 }
 
 func LoadDevice(path, name, deviceType string) (Device, error) {
