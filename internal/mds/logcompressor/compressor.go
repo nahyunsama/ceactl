@@ -166,22 +166,8 @@ func (r *Result) WriteReport(w io.Writer, maxUnparsed int) error {
 
 	write("=== 압축 결과: 그룹 %d개 (미분류 %d줄) ===\n\n", len(r.Groups), len(r.Unparsed))
 
-	tw := tabwriter.NewWriter(w, 0, 0, 2, ' ', 0)
-	for _, g := range r.Groups {
-		if err != nil {
-			break
-		}
-		var span string
-		if !g.First.Equal(g.Last) {
-			span = fmt.Sprintf("%s ~ %s", g.First.Format("15:04:05"), g.Last.Format("15:04:05"))
-		} else {
-			span = g.First.Format("15:04:05")
-		}
-		_, err = fmt.Fprintf(tw, "[sev%s] %s-%s\tiface=%s vsan=%s\t%d회\t(%s)\n",
-			g.Severity, g.Facility, g.Mnemonic, g.Iface, g.Vsan, g.Count, span)
-	}
 	if err == nil {
-		err = tw.Flush()
+		err = r.WriteGroupTable(w)
 	}
 
 	write("\n=== 미분류 줄 (%d개) ===\n", len(r.Unparsed))
@@ -196,4 +182,26 @@ func (r *Result) WriteReport(w io.Writer, maxUnparsed int) error {
 		write("  ... 외 %d줄\n", len(r.Unparsed)-limit)
 	}
 	return err
+}
+
+func (r *Result) WriteGroupTable(w io.Writer) error {
+	tw := tabwriter.NewWriter(w, 0, 0, 2, ' ', 0)
+	var err error
+	for _, g := range r.Groups {
+		if err != nil {
+			break
+		}
+		var span string
+		if !g.First.Equal(g.Last) {
+			span = fmt.Sprintf("%s ~ %s", g.First.Format("15:04:05"), g.Last.Format("15:04:05"))
+		} else {
+			span = g.First.Format("15:04:05")
+		}
+		_, err = fmt.Fprintf(tw, "[sev%s] %s-%s\tiface=%s vsan=%s\t%d회\t(%s)\n",
+			g.Severity, g.Facility, g.Mnemonic, g.Iface, g.Vsan, g.Count, span)
+	}
+	if err != nil {
+		return err
+	}
+	return tw.Flush()
 }
