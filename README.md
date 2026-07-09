@@ -59,7 +59,6 @@ ceactl.exe mds logs analyze --device <name> --from <date> --to <date>
 ceactl.exe mds logs analyze --device <name> --file /path/to/logfile.log
 ```
 
-```
 ## TODO
 
 - Add MDS Command
