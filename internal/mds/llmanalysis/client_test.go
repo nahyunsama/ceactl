@@ -50,6 +50,9 @@ func TestChat_SendsExpectedPayload(t *testing.T) {
 	if got.Options.NumCtx != defaultNumCtx {
 		t.Errorf("got num_ctx %d, want %d", got.Options.NumCtx, defaultNumCtx)
 	}
+	if got.Options.Temperature != defaultTemperature {
+		t.Errorf("got temperature %v, want %v", got.Options.Temperature, defaultTemperature)
+	}
 	if len(got.Messages) != 2 || got.Messages[0].Role != "system" || got.Messages[0].Content != "sys prompt" {
 		t.Errorf("got messages[0] = %+v, want system/sys prompt", got.Messages[0])
 	}

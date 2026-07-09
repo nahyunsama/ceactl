@@ -10,20 +10,25 @@ import (
 	"time"
 )
 
-const defaultNumCtx = 128000
+const (
+	defaultNumCtx      = 128000
+	defaultTemperature = 0
+)
 
 type Client struct {
-	Endpoint string
-	Model    string
-	NumCtx   int
-	HTTP     *http.Client
+	Endpoint    string
+	Model       string
+	NumCtx      int
+	Temperature float64
+	HTTP        *http.Client
 }
 
 func NewClient(endpoint, model string) *Client {
 	return &Client{
-		Endpoint: endpoint,
-		Model:    model,
-		NumCtx:   defaultNumCtx,
+		Endpoint:    endpoint,
+		Model:       model,
+		NumCtx:      defaultNumCtx,
+		Temperature: defaultTemperature,
 		HTTP: &http.Client{
 			Timeout: 600 * time.Second,
 		},
@@ -43,7 +48,8 @@ type chatRequest struct {
 }
 
 type chatOptions struct {
-	NumCtx int `json:"num_ctx"`
+	NumCtx      int     `json:"num_ctx"`
+	Temperature float64 `json:"temperature"`
 }
 
 type chatResponse struct {
@@ -58,7 +64,7 @@ func (c *Client) Chat(ctx context.Context, systemPrompt, userPrompt string) (str
 			{Role: "user", Content: userPrompt},
 		},
 		Stream:  false,
-		Options: chatOptions{NumCtx: c.NumCtx},
+		Options: chatOptions{NumCtx: c.NumCtx, Temperature: c.Temperature},
 	}
 
 	payload, err := json.Marshal(reqBody)
