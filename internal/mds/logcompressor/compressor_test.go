@@ -287,3 +287,66 @@ func TestAnalyze_GroupsOrderedByFirstOccurrence(t *testing.T) {
 		t.Errorf("Groups[1].Iface = %q, want fc1/2", result.Groups[1].Iface)
 	}
 }
+
+func TestAnalyze_PreservesMessageVariants(t *testing.T) {
+	log := strings.Join([]string{
+		"2026 Jun 1 13:57:25 switch " +
+			"%ETHPORT-4-IF_SFP_WARNING: " +
+			"Interface IPStorage1/6, Low Rx Power Warning",
+		"2026 Jun 1 14:07:26 switch " +
+			"%ETHPORT-4-IF_SFP_WARNING: " +
+			"Interface IPStorage1/6, Low Rx Power Warning cleared",
+	}, "\n")
+
+	result, err := Analyze(
+		strings.NewReader(log),
+		time.Time{},
+		time.Time{},
+	)
+	if err != nil {
+		t.Fatalf("Analyze returned an error: %v", err)
+	}
+
+	if len(result.Groups) != 1 {
+		t.Fatalf("got %d groups, want 1", len(result.Groups))
+	}
+
+	group := result.Groups[0]
+
+	if group.Count != 2 {
+		t.Fatalf("got group count %d, want 2", group.Count)
+	}
+
+	if len(group.Variants) != 2 {
+		t.Fatalf(
+			"got %d variants, want 2",
+			len(group.Variants),
+		)
+	}
+
+	if group.Variants[0].Message !=
+		"Interface IPStorage1/6, Low Rx Power Warning" {
+		t.Errorf(
+			"unexpected first variant: %q",
+			group.Variants[0].Message,
+		)
+	}
+
+	if group.Variants[1].Message !=
+		"Interface IPStorage1/6, Low Rx Power Warning cleared" {
+		t.Errorf(
+			"unexpected second variant: %q",
+			group.Variants[1].Message,
+		)
+	}
+}
+
+func TestParseInterface_PortForm(t *testing.T) {
+	line := "%PORT-5-IF_PORT_QUIESCE_FAILED: " +
+		"Interface fcip303 port quiesce failed"
+
+	got := parseInterface(line)
+	if got != "fcip303" {
+		t.Errorf("got interface %q, want %q", got, "fcip303")
+	}
+}

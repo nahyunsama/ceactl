@@ -14,15 +14,23 @@ import (
 var (
 	reTimestamp = regexp.MustCompile(`^(\d{4}\s+\w+\s+\d+\s+\d{2}:\d{2}:\d{2})`)
 	reMnemonic  = regexp.MustCompile(`%([A-Z0-9_-]+)-(\d)-([A-Z0-9_]+):`)
-	reInterface = regexp.MustCompile(`Interface (\S+?)(?:,|\s+is\b)`)
+	reInterface = regexp.MustCompile(`(?i)\bInterface\s+([^\s,]+)`)
 	reVsan      = regexp.MustCompile(`(?i)VSAN\s*(\d+)`)
 )
 
 type groupKey struct {
 	facility string
+	severity string
 	mnemonic string
 	iface    string
 	vsan     string
+}
+
+type MessageVariant struct {
+	Message string
+	Count   int
+	First   time.Time
+	Last    time.Time
 }
 
 type Group struct {
@@ -35,6 +43,12 @@ type Group struct {
 	Count    int
 	First    time.Time
 	Last     time.Time
+	Variants []MessageVariant
+}
+
+type groupAccumulator struct {
+	group        Group
+	variantIndex map[string]int
 }
 
 type Result struct {
@@ -79,8 +93,18 @@ func parseVsan(line string) string {
 	return m[1]
 }
 
+func parseMessageDetail(line string) string {
+	location := reMnemonic.FindStringIndex(line)
+	if location == nil {
+		return ""
+	}
+
+	detail := strings.TrimSpace(line[location[1]:])
+	return strings.Join(strings.Fields(detail), " ")
+}
+
 func Analyze(r io.Reader, from, to time.Time) (*Result, error) {
-	groups := make(map[groupKey]*Group)
+	groups := make(map[groupKey]*groupAccumulator)
 	var order []groupKey
 	var unparsed []string
 
@@ -106,51 +130,104 @@ func Analyze(r io.Reader, from, to time.Time) (*Result, error) {
 			continue
 		}
 
-		facility, severity, mnemonic, mOK := parseMnemonic(line)
-		if !mOK {
+		facility, severity, mnemonic, mnemonicOK := parseMnemonic(line)
+		if !mnemonicOK {
 			unparsed = append(unparsed, line)
 			continue
 		}
 
 		iface := parseInterface(line)
 		vsan := parseVsan(line)
-		key := groupKey{facility: facility, mnemonic: mnemonic, iface: iface, vsan: vsan}
 
-		g, exists := groups[key]
+		key := groupKey{
+			facility: facility,
+			severity: severity,
+			mnemonic: mnemonic,
+			iface:    iface,
+			vsan:     vsan,
+		}
+
+		accumulator, exists := groups[key]
 		if !exists {
-			g = &Group{
-				Facility: facility,
-				Mnemonic: mnemonic,
-				Iface:    iface,
-				Vsan:     vsan,
-				Severity: severity,
-				Sample:   strings.TrimSpace(line),
-				Count:    0,
-				First:    ts,
-				Last:     ts,
+			accumulator = &groupAccumulator{
+				group: Group{
+					Facility: facility,
+					Mnemonic: mnemonic,
+					Iface:    iface,
+					Vsan:     vsan,
+					Severity: severity,
+					Sample:   strings.TrimSpace(line),
+					First:    ts,
+					Last:     ts,
+				},
+				variantIndex: make(map[string]int),
 			}
-			groups[key] = g
+			groups[key] = accumulator
 			order = append(order, key)
 		}
-		g.Count++
-		if ts.Before(g.First) {
-			g.First = ts
+
+		group := &accumulator.group
+		group.Count++
+
+		if ts.Before(group.First) {
+			group.First = ts
 		}
-		if ts.After(g.Last) {
-			g.Last = ts
+		if ts.After(group.Last) {
+			group.Last = ts
+		}
+
+		detail := parseMessageDetail(line)
+		if detail == "" {
+			continue
+		}
+
+		variantPosition, variantExists := accumulator.variantIndex[detail]
+		if !variantExists {
+			variantPosition = len(group.Variants)
+			accumulator.variantIndex[detail] = variantPosition
+
+			group.Variants = append(group.Variants, MessageVariant{
+				Message: detail,
+				First:   ts,
+				Last:    ts,
+			})
+		}
+
+		variant := &group.Variants[variantPosition]
+		variant.Count++
+
+		if ts.Before(variant.First) {
+			variant.First = ts
+		}
+		if ts.After(variant.Last) {
+			variant.Last = ts
 		}
 	}
+
 	if err := scanner.Err(); err != nil {
 		return nil, err
 	}
 
-	sort.Slice(order, func(i, j int) bool {
-		return groups[order[i]].First.Before(groups[order[j]].First)
+	sort.SliceStable(order, func(i, j int) bool {
+		return groups[order[i]].group.First.Before(
+			groups[order[j]].group.First,
+		)
 	})
 
-	result := &Result{Unparsed: unparsed}
+	result := &Result{
+		Unparsed: unparsed,
+	}
+
 	for _, key := range order {
-		result.Groups = append(result.Groups, *groups[key])
+		group := groups[key].group
+
+		sort.SliceStable(group.Variants, func(i, j int) bool {
+			return group.Variants[i].First.Before(
+				group.Variants[j].First,
+			)
+		})
+
+		result.Groups = append(result.Groups, group)
 	}
 	return result, nil
 }
@@ -187,21 +264,40 @@ func (r *Result) WriteReport(w io.Writer, maxUnparsed int) error {
 func (r *Result) WriteGroupTable(w io.Writer) error {
 	tw := tabwriter.NewWriter(w, 0, 0, 2, ' ', 0)
 	var err error
-	for _, g := range r.Groups {
+
+	for index, group := range r.Groups {
 		if err != nil {
 			break
 		}
+
 		var span string
-		if !g.First.Equal(g.Last) {
-			span = fmt.Sprintf("%s ~ %s", g.First.Format("15:04:05"), g.Last.Format("15:04:05"))
+		if !group.First.Equal(group.Last) {
+			span = fmt.Sprintf(
+				"%s ~ %s",
+				group.First.Format("15:04:05"),
+				group.Last.Format("15:04:05"),
+			)
 		} else {
-			span = g.First.Format("15:04:05")
+			span = group.First.Format("15:04:05")
 		}
-		_, err = fmt.Fprintf(tw, "[sev%s] %s-%s\tiface=%s vsan=%s\t%d회\t(%s)\n",
-			g.Severity, g.Facility, g.Mnemonic, g.Iface, g.Vsan, g.Count, span)
+
+		_, err = fmt.Fprintf(
+			tw,
+			"[E%d sev%s] %s-%s\tiface=%s vsan=%s\t%d회\t(%s)\n",
+			index+1,
+			group.Severity,
+			group.Facility,
+			group.Mnemonic,
+			group.Iface,
+			group.Vsan,
+			group.Count,
+			span,
+		)
 	}
+
 	if err != nil {
 		return err
 	}
+
 	return tw.Flush()
 }
