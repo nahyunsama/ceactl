@@ -8,99 +8,133 @@ import (
 	"github.com/nahyunsama/ceactl/internal/mds/logcompressor"
 )
 
-func mustParseDay(t *testing.T, s string) time.Time {
+func mustParseDay(t *testing.T, value string) time.Time {
 	t.Helper()
-	tm, err := time.Parse("2006 Jan 2 15:04:05", s)
+
+	parsed, err := time.Parse("2006 Jan 2 15:04:05", value)
 	if err != nil {
-		t.Fatalf("failed to parse test time %q: %v", s, err)
+		t.Fatalf("failed to parse test time %q: %v", value, err)
 	}
-	return tm
+
+	return parsed
 }
 
-func TestBuildUserPrompt_IncludesDeviceAndRange(t *testing.T) {
+func TestBuildUserPrompt_StructuredEvents(t *testing.T) {
 	result := &logcompressor.Result{
 		Groups: []logcompressor.Group{
 			{
-				Facility: "PORT", Mnemonic: "IF_DOWN", Iface: "fc1/1", Vsan: "100", Severity: "5", Count: 3,
-				First: mustParseDay(t, "2026 Jun 1 11:34:35"),
-				Last:  mustParseDay(t, "2026 Jun 1 13:55:07"),
+				Facility: "ETHPORT",
+				Mnemonic: "IF_DOWN_LINK_FAILURE",
+				Iface:    "IPStorage1/6",
+				Vsan:     "-",
+				Severity: "5",
+				Count:    4,
+				First:    mustParseDay(t, "2026 Jun 1 11:34:35"),
+				Last:     mustParseDay(t, "2026 Jun 1 13:55:07"),
+			},
+			{
+				Facility: "PORT",
+				Mnemonic: "IF_TRUNK_DOWN",
+				Iface:    "fcip303",
+				Vsan:     "22",
+				Severity: "5",
+				Count:    3,
+				First:    mustParseDay(t, "2026 Jun 1 11:35:00"),
+				Last:     mustParseDay(t, "2026 Jun 1 13:55:00"),
 			},
 		},
 	}
 
-	got, err := BuildUserPrompt("mds-lab-1", result)
+	got, err := BuildUserPrompt(PromptInput{
+		Device:      "GJ-IPSAN-M9K-1",
+		FilterStart: mustParseDay(t, "2026 Jun 1 00:00:00"),
+		FilterEnd:   mustParseDay(t, "2026 Jun 1 23:59:59"),
+		Result:      result,
+	})
 	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
+		t.Fatalf("BuildUserPrompt returned an error: %v", err)
 	}
 
-	if !strings.Contains(got, "device (mds-lab-1)") {
-		t.Errorf("output missing device name:\n%s", got)
+	expected := []string{
+		`device: "GJ-IPSAN-M9K-1"`,
+		`filter_start: "2026-06-01 00:00:00"`,
+		`filter_end: "2026-06-01 23:59:59"`,
+		`event_time_min: "2026-06-01 11:34:35"`,
+		`event_time_max: "2026-06-01 13:55:07"`,
+		`<events count="2">`,
+		`event id=1 severity="5" facility="ETHPORT"`,
+		`mnemonic="IF_DOWN_LINK_FAILURE"`,
+		`interface="IPStorage1/6" vsan=null observed_count=4`,
+		`first="2026-06-01 11:34:35"`,
+		`last="2026-06-01 13:55:07"`,
+		`event id=2 severity="5" facility="PORT"`,
+		`interface="fcip303" vsan="22" observed_count=3`,
 	}
-	if !strings.Contains(got, "2026 Jun 1, 11:34:35–13:55:07") {
-		t.Errorf("output missing same-day time range:\n%s", got)
-	}
-	if !strings.Contains(got, "[sev5] PORT-IF_DOWN") {
-		t.Errorf("output missing group table row:\n%s", got)
+
+	for _, value := range expected {
+		if !strings.Contains(got, value) {
+			t.Errorf("output does not contain %q:\n%s", value, got)
+		}
 	}
 }
 
-func TestBuildUserPrompt_RangeSpansMultipleDays(t *testing.T) {
-	result := &logcompressor.Result{
-		Groups: []logcompressor.Group{
-			{
-				Facility: "PORT", Mnemonic: "IF_DOWN", Iface: "fc1/1", Vsan: "100", Severity: "5", Count: 1,
-				First: mustParseDay(t, "2026 Jun 1 23:55:00"),
-				Last:  mustParseDay(t, "2026 Jun 2 00:05:00"),
-			},
-		},
-	}
-
-	got, err := BuildUserPrompt("mds-lab-1", result)
+func TestBuildUserPrompt_EmptyResult(t *testing.T) {
+	got, err := BuildUserPrompt(PromptInput{
+		Result: &logcompressor.Result{},
+	})
 	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
+		t.Fatalf("BuildUserPrompt returned an error: %v", err)
 	}
 
-	if !strings.Contains(got, "2026 Jun 1, 23:55:00–2026 Jun 2, 00:05:00") {
-		t.Errorf("output missing multi-day time range:\n%s", got)
+	expected := []string{
+		"device: null",
+		"filter_start: null",
+		"filter_end: null",
+		"event_time_min: null",
+		"event_time_max: null",
+		`<events count="0">`,
+		"</events>",
+	}
+
+	for _, value := range expected {
+		if !strings.Contains(got, value) {
+			t.Errorf("output does not contain %q:\n%s", value, got)
+		}
 	}
 }
 
-func TestBuildUserPrompt_NoGroupsHasUnknownRange(t *testing.T) {
-	got, err := BuildUserPrompt("mds-lab-1", &logcompressor.Result{})
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-
-	if !strings.Contains(got, "an unknown time range") {
-		t.Errorf("output missing unknown-range fallback:\n%s", got)
-	}
-}
-
-func TestBuildUserPrompt_UnparsedNoteSumsRepeatCounts(t *testing.T) {
+func TestBuildUserPrompt_SummarizesUnparsed(t *testing.T) {
 	result := &logcompressor.Result{
 		Unparsed: []string{
-			"2026 Jun 1 11:35:45 GJ-IPSAN-M9K-1 last message repeated 2 times",
-			"2026 Jun 1 11:47:50 GJ-IPSAN-M9K-1 last message repeated 3 times",
+			"2026 Jun 1 11:35:45 switch last message repeated 2 times",
+			"2026 Jun 1 11:47:50 switch last message repeated 3 times",
+			"unrecognized log line",
 		},
 	}
 
-	got, err := BuildUserPrompt("mds-lab-1", result)
+	got, err := BuildUserPrompt(PromptInput{
+		Result: result,
+	})
 	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
+		t.Fatalf("BuildUserPrompt returned an error: %v", err)
 	}
 
-	if !strings.Contains(got, `Note: 2 lines in the original log were device-side "last message repeated N times" compressions (totaling ~5 additional occurrences)`) {
-		t.Errorf("output missing unparsed note:\n%s", got)
+	expected := []string{
+		"repeat_notice_lines: 2",
+		"unassigned_repeat_occurrences: 5",
+		"other_unparsed_lines: 1",
+	}
+
+	for _, value := range expected {
+		if !strings.Contains(got, value) {
+			t.Errorf("output does not contain %q:\n%s", value, got)
+		}
 	}
 }
 
-func TestBuildUserPrompt_NoUnparsedOmitsNote(t *testing.T) {
-	got, err := BuildUserPrompt("mds-lab-1", &logcompressor.Result{})
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-
-	if strings.Contains(got, "Note:") {
-		t.Errorf("output should omit the unparsed note when there are no unparsed lines:\n%s", got)
+func TestBuildUserPrompt_NilResult(t *testing.T) {
+	_, err := BuildUserPrompt(PromptInput{})
+	if err == nil {
+		t.Fatal("expected an error for a nil result")
 	}
 }

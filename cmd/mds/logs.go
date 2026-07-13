@@ -61,9 +61,6 @@ func LogsAnalyzeCommand(opts *commandOptions) *cobra.Command {
 				}
 				defer f.Close()
 				reader = f
-				if device == "" {
-					device = file
-				}
 			} else {
 				cfg, err := config.LoadConfig(opts.configPath, opts.deviceName, opts.verbose)
 				if err != nil {
@@ -93,7 +90,12 @@ func LogsAnalyzeCommand(opts *commandOptions) *cobra.Command {
 				return nil
 			}
 
-			userPrompt, err := llmanalysis.BuildUserPrompt(device, result)
+			userPrompt, err := llmanalysis.BuildUserPrompt(llmanalysis.PromptInput{
+				Device:      device,
+				FilterStart: from,
+				FilterEnd:   to,
+				Result:      result,
+			})
 			if err != nil {
 				return fmt.Errorf("failed to build LLM analysis prompt: %v", err)
 			}
