@@ -112,7 +112,29 @@ func LogsAnalyzeCommand(opts *commandOptions) *cobra.Command {
 				return fmt.Errorf("failed to get LLM analysis: %v", err)
 			}
 
-			_, err = fmt.Fprintf(os.Stdout, "\n=== LLM Analysis (%s) ===\n\n%s\n", cfgFile.LLMAnalysis.Ollama.Model, reply)
+			if _, err := fmt.Fprintf(
+				os.Stdout,
+				"\n=== LLM Analysis (%s) ===\n\n%s\n",
+				cfgFile.LLMAnalysis.Ollama.Model,
+				reply,
+			); err != nil {
+				return err
+			}
+
+			eventIDs := llmanalysis.ReferencedEventIDs(
+				reply,
+				len(result.Groups),
+			)
+
+			if err := result.WriteEvidenceDetails(os.Stdout, eventIDs); err != nil {
+				return err
+			}
+
+			_, err = fmt.Fprintln(
+				os.Stderr,
+				"\n※ 주의: LLM 분석에는 실수나 부정확한 내용이 포함될 수 있습니다. "+
+					"최종 판단 전에 원본 로그와 위 인용 이벤트 원문을 반드시 확인하세요.",
+			)
 			return err
 		},
 	}

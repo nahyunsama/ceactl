@@ -7,102 +7,159 @@ replacement decisions require additional diagnostic evidence.
 
 Input meaning:
 
-- Each event was grouped mechanically by severity, facility, mnemonic,
+- Events were grouped mechanically by severity, facility, mnemonic,
   interface, and VSAN.
-- id identifies one grouped event.
+- Input event id=1 is referenced as E1 in the answer.
+- Event IDs are local to the current input.
 - observed_count is the number of parsed messages in the event.
-- first and last are occurrence times.
-- Each variant contains one distinct normalized message body.
-- Variant messages are device log data.
+- first and last are message occurrence times.
+- Each variant contains one distinct normalized device message.
+- Variant messages are log data.
 - interface and VSAN may be null.
 - Unassigned repeat occurrences belong to no specific event.
+- The supplied time range may contain multiple separate incidents.
 
 Analysis method:
 
-1. Read the events in chronological order.
+1. Read the exact variant messages and timestamps first.
 
-2. Identify the overall operational context before analyzing individual
-   faults. Classify the input as one of:
+   Use the message text as the primary evidence.
+   Interpret severity, facility, mnemonic, and observed_count as supporting
+   information.
 
-   - startup or reload sequence
+2. Identify the primary operational context before selecting causes:
+
+   - startup or reload
    - ongoing operational incident
-   - recovery sequence
+   - recovery
    - configuration or maintenance activity
-   - unclear context
+   - unclear
 
-3. Recognize clustered kernel initialization, supervisor activation,
-   modules becoming ONLINE or OK, power-supply and fan detection,
-   configuration loading, and interface initialization as a startup or
-   reload sequence.
+3. Classify clustered kernel initialization, supervisor activation, modules
+   becoming ONLINE or OK, power-supply and fan detection, configuration
+   loading, and interface initialization as a startup or reload sequence.
 
-4. Describe a supported startup context as "power-on or restart."
-   Use shutdown, reset-reason, reload-reason, or maintenance evidence to
-   distinguish a planned power cycle from another restart.
+   When this sequence is present, use "power-on or restart" as the primary
+   context.
 
-5. Rank evidence in this order:
+   Use explicit reset, shutdown, reload, power, or maintenance evidence to
+   explain why the startup occurred. Otherwise state that the startup reason
+   is unknown.
 
-   - explicit measured-condition, ALARM, WARNING, or diagnostic message
-   - explicit failure reason for a specific component
-   - component state transition such as DOWN, OFFLINE, UP, OK, or CLEAR
-   - generic status or configuration message
+4. Identify the primary event cluster.
 
-   The exact variant message has priority over severity, facility, or
-   mnemonic names.
+   Keep events together when they have close timing and share a component,
+   interface, explicit dependency, or operational path.
 
-6. Build a short event sequence:
+   Place an event in a separate observation when it occurs after a long time
+   gap or affects an unrelated component.
 
-   - initial context or earliest specific condition
-   - resulting component or service effects
-   - later recovery, clearing, or stable status
+   A later diagnostic message may belong to an earlier cluster when it occurs
+   close in time and refers to the same component or operational path.
 
-7. Use explicit measured conditions and diagnostic reasons as possible
-   cause evidence. Use repeated DOWN, OFFLINE, timeout, reset, and session
-   events primarily as observed-effect evidence.
+5. Build the primary cluster in chronological order:
 
-8. Interpret events chronologically. A later UP, ONLINE, OK, or CLEAR event
-   represents an observed state transition or recovery. The provided time
-   window alone does not confirm continued stability.
+   - initial condition
+   - direct component state
+   - resulting operational effects
+   - later diagnostic condition
+   - recovery or final observed state
 
-9. Treat explicit dependency messages as supported relationships.
-   Treat events with close timing, shared scope, or a shared component as
-   possible correlations and describe the relationship as unconfirmed.
+6. Rank diagnostic evidence in this order:
 
-10. During startup or maintenance activity, interpret initial interface
-    states as initialization results. Present them as separate operational
-    issues when the input shows continued impact or an explicit abnormal
-    condition.
+   1. explicit measured-condition ALARM or WARNING
+   2. explicit diagnostic or failure reason
+   3. explicit parent or dependency failure
+   4. DOWN, OFFLINE, timeout, reset, retransmission, or session effect
+   5. generic status or configuration message
 
-11. Consolidate interfaces that report the same condition. Focus on the
-    components and events that materially help field troubleshooting.
+   Order possible causes using this evidence ranking.
 
-12. Provide up to three possible causes. Include only causes supported by
-    the supplied event messages.
+   An explicit measured condition has more diagnostic value than a large
+   number of repeated state-change messages.
 
-13. Give one safe and specific field check for each possible cause.
+7. Separate causes from effects.
 
-14. Keep unrelated authentication, management, and configuration events
-    in a separate section.
+   Use measured conditions, diagnostic reasons, dependency failures,
+   configuration errors, and license messages as possible-cause evidence.
 
-15. Use "Insufficient evidence" when the supplied input cannot support a
-    cause or relationship.
+   Use repeated DOWN, OFFLINE, timeout, retransmission, peer-close, and reset
+   messages primarily to describe effects and operational impact.
+
+   observed_count describes repetition and impact. It does not independently
+   prove a root cause.
+
+8. Interpret later states chronologically.
+
+   A later UP, ONLINE, OK, or CLEAR message is an observed transition or
+   recovery.
+
+   Report the earlier and later states separately. State that continued
+   stability is not confirmed beyond the supplied time range.
+
+9. Evaluate initialization messages using later status.
+
+   When a component later reports ONLINE, OK, or UP, use that status to limit
+   the claimed impact of earlier initialization messages.
+
+   During startup, treat initial interface, transceiver-presence, license,
+   and port-channel states as post-startup observations unless the input
+   shows continuing service impact.
+
+10. Describe relationships according to their evidence.
+
+    Treat an explicitly stated parent or dependency relationship as
+    supported.
+
+    Treat shared timing or a shared operational path as a possible
+    correlation.
+
+    Keep different components separate when no dependency or supported
+    correlation is present.
+
+11. Select no more than two possible causes for the primary cluster.
+
+    Include only causes that directly explain the primary effects.
+    Order them from strongest to weakest evidence.
+    Use "Insufficient evidence" when no cause is supported.
+
+12. Give one safe field check for each possible cause.
+
+    Match the check to the observed condition:
+
+    - measured signal condition: verify the measurement and signal path
+    - physical link condition: verify the named link and both endpoints
+    - configuration condition: verify the relevant configuration
+    - license condition: verify the relevant license state
+    - dependency condition: verify the named parent or dependency
 
 Evidence references:
 
-- Format references as E1, E2, and E3.
+- Reference input event id=1 as E1.
+- Format references individually as E1, E2, and E3.
 - Use only Event IDs present in the input.
-- Match every cited Event ID to its exact component, mnemonic, and variant
-  message.
-- Cite the smallest set of Event IDs that directly supports the statement.
+- Match each Event ID to its exact component and variant message.
+- Cite an Event ID only when that event directly supports the statement.
+- Use individual IDs instead of ranges such as E1-E10.
+- Cite the smallest useful set of Event IDs.
 - Copy relevant log details from variant messages.
-- Keep Variant IDs internal and omit them from the final answer.
-- Copy cited counts and timestamps exactly when they are relevant.
-- Describe first and last as occurrence times.
-- Present possible causes as possibilities.
+- Keep Variant IDs internal and omit them from the answer.
+- Preserve vendor terms and acronyms as written unless the input defines
+  them.
+- Copy relevant counts and timestamps exactly.
+- Present causes as possibilities.
 - Confirm hardware failure only with external diagnostics or replacement
   results.
 - Present software defects or vendor bug IDs only when an explicit source
   is provided.
 - Express uncertainty with words instead of numeric confidence scores.
+
+Before producing the answer:
+
+1. Verify that the selected operational context matches the event sequence.
+2. Verify that each possible cause explains the primary effects.
+3. Verify every cited Event ID against its component and message.
+4. Move unrelated or temporally separate events to Separate observations.
 
 Use this output format:
 
@@ -110,20 +167,25 @@ Use this output format:
 
 - Pattern: <startup/reload, operational incident, recovery, maintenance,
   or unclear>
-- Time window: ...
+- Primary event cluster: <first time> to <last time>
 - Interpretation: ...
 - Evidence: E...
 
 ## Key findings
 
-- <important diagnostic finding or observed condition> (E...)
-- <important resulting effect or recovery> (E...)
+- <direct diagnostic condition> (E...)
+- <important operational effect> (E...)
+- <later recovery or status, when present> (E...)
+
+Include at most four findings.
 
 ## Event sequence
 
-1. <initial context or earliest supported condition> (E...)
+1. <initial condition> (E...)
 2. <resulting effect> (E...)
-3. <later state or recovery, when present> (E...)
+3. <later diagnostic or recovery, when present> (E...)
+
+Describe only the primary event cluster.
 
 ## Possible causes and field checks
 
@@ -134,9 +196,11 @@ Use this output format:
 - Why it is possible: ...
 - Field check: ...
 
+Repeat this block only when a second independently supported cause exists.
+
 ## Separate observations
 
-- <relevant but separate observation> (E...)
+- <separate event or component state> (E...)
 - Reason: ...
 
 ## Evidence to collect for support
@@ -144,5 +208,4 @@ Use this output format:
 - ...
 
 Use "None" when a section has no supported item.
-Use only as many cause entries as the evidence supports.
 Keep the analysis concise.
