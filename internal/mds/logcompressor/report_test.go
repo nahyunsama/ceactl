@@ -33,7 +33,7 @@ func TestWriteReport_HeaderCounts(t *testing.T) {
 	if !strings.Contains(out, "그룹 1개 (미분류 2줄)") {
 		t.Errorf("output missing header counts:\n%s", out)
 	}
-	if !strings.Contains(out, "[sev5] PORT-IF_DOWN") {
+	if !strings.Contains(out, "[E1 sev5] PORT-IF_DOWN") {
 		t.Errorf("output missing group facility/mnemonic:\n%s", out)
 	}
 	if !strings.Contains(out, "iface=fc1/1") || !strings.Contains(out, "vsan=100") {
@@ -130,5 +130,76 @@ func TestWriteReport_EmptyResult(t *testing.T) {
 	}
 	if !strings.Contains(out, "미분류 줄 (0개)") {
 		t.Errorf("output missing zero-count unparsed header:\n%s", out)
+	}
+}
+
+func TestWriteGroupTable_IncludesSequentialEventIDs(t *testing.T) {
+	observed := time.Date(
+		2026,
+		time.June,
+		1,
+		12,
+		0,
+		0,
+		0,
+		time.UTC,
+	)
+
+	result := &Result{
+		Groups: []Group{
+			{
+				Facility: "ETHPORT",
+				Mnemonic: "IF_DOWN_LINK_FAILURE",
+				Iface:    "IPStorage1/6",
+				Vsan:     "-",
+				Severity: "5",
+				Count:    1,
+				First:    observed,
+				Last:     observed,
+			},
+			{
+				Facility: "ETHPORT",
+				Mnemonic: "IF_SFP_WARNING",
+				Iface:    "IPStorage1/6",
+				Vsan:     "-",
+				Severity: "4",
+				Count:    1,
+				First:    observed,
+				Last:     observed,
+			},
+			{
+				Facility: "ETHPORT",
+				Mnemonic: "IF_SFP_ALARM",
+				Iface:    "IPStorage1/6",
+				Vsan:     "-",
+				Severity: "3",
+				Count:    1,
+				First:    observed,
+				Last:     observed,
+			},
+		},
+	}
+
+	var buf bytes.Buffer
+	if err := result.WriteGroupTable(&buf); err != nil {
+		t.Fatalf("WriteGroupTable returned an error: %v", err)
+	}
+
+	output := buf.String()
+
+	expected := []string{
+		"[E1 sev5] ETHPORT-IF_DOWN_LINK_FAILURE",
+		"[E2 sev4] ETHPORT-IF_SFP_WARNING",
+		"[E3 sev3] ETHPORT-IF_SFP_ALARM",
+	}
+
+	for _, value := range expected {
+		if !strings.Contains(output, value) {
+			t.Errorf(
+				"output does not contain %q:\n%s",
+				value,
+				output,
+			)
+		}
 	}
 }

@@ -10,6 +10,7 @@ import (
 	appconfig "github.com/nahyunsama/ceactl/internal/config"
 	"github.com/nahyunsama/ceactl/internal/mds/commands"
 	"github.com/nahyunsama/ceactl/internal/mds/config"
+	"github.com/nahyunsama/ceactl/internal/mds/llmanalysis"
 	"github.com/nahyunsama/ceactl/internal/mds/logcompressor"
 	"github.com/spf13/cobra"
 )
@@ -51,6 +52,7 @@ func LogsAnalyzeCommand(opts *commandOptions) *cobra.Command {
 			}
 
 			var reader io.Reader
+			device := opts.deviceName
 
 			if file != "" {
 				f, err := os.Open(file)
@@ -63,6 +65,9 @@ func LogsAnalyzeCommand(opts *commandOptions) *cobra.Command {
 				cfg, err := config.LoadConfig(opts.configPath, opts.deviceName, opts.verbose)
 				if err != nil {
 					return fmt.Errorf("failed to load config: %v", err)
+				}
+				if device == "" {
+					device = cfg.SwitchIP
 				}
 
 				body, err := commands.GetLoggingLogfile(cmd.Context(), cfg)
@@ -77,7 +82,60 @@ func LogsAnalyzeCommand(opts *commandOptions) *cobra.Command {
 				return fmt.Errorf("failed to analyze log: %v", err)
 			}
 
-			return result.WriteReport(os.Stdout, 10)
+			if err := result.WriteReport(os.Stdout, 10); err != nil {
+				return err
+			}
+
+			if cfgFile.LLMAnalysis.Backend != "ollama" {
+				return nil
+			}
+
+			userPrompt, err := llmanalysis.BuildUserPrompt(llmanalysis.PromptInput{
+				Device:      device,
+				FilterStart: from,
+				FilterEnd:   to,
+				Result:      result,
+			})
+			if err != nil {
+				return fmt.Errorf("failed to build LLM analysis prompt: %v", err)
+			}
+
+			fmt.Fprintf(os.Stderr, "Requesting LLM analysis from %s (model: %s)...\n", cfgFile.LLMAnalysis.Ollama.Endpoint, cfgFile.LLMAnalysis.Ollama.Model)
+			done := make(chan struct{})
+			go reportElapsed(os.Stderr, done)
+
+			client := llmanalysis.NewClient(cfgFile.LLMAnalysis.Ollama.Endpoint, cfgFile.LLMAnalysis.Ollama.Model)
+			reply, err := client.Chat(cmd.Context(), llmanalysis.SystemPrompt, userPrompt)
+			close(done)
+			fmt.Fprintln(os.Stderr)
+			if err != nil {
+				return fmt.Errorf("failed to get LLM analysis: %v", err)
+			}
+
+			if _, err := fmt.Fprintf(
+				os.Stdout,
+				"\n=== LLM Analysis (%s) ===\n\n%s\n",
+				cfgFile.LLMAnalysis.Ollama.Model,
+				reply,
+			); err != nil {
+				return err
+			}
+
+			eventIDs := llmanalysis.ReferencedEventIDs(
+				reply,
+				len(result.Groups),
+			)
+
+			if err := result.WriteEvidenceDetails(os.Stdout, eventIDs); err != nil {
+				return err
+			}
+
+			_, err = fmt.Fprintln(
+				os.Stderr,
+				"\n※ 주의: LLM 분석에는 실수나 부정확한 내용이 포함될 수 있습니다. "+
+					"최종 판단 전에 원본 로그와 위 인용 이벤트 원문을 반드시 확인하세요.",
+			)
+			return err
 		},
 	}
 
@@ -86,6 +144,24 @@ func LogsAnalyzeCommand(opts *commandOptions) *cobra.Command {
 	c.Flags().StringVar(&file, "file", "", "path to a local log file (skips device fetch)")
 
 	return c
+}
+
+// reportElapsed writes a "\r"-overwritten elapsed-time counter to w once per
+// second until done is closed, so a user waiting on a slow LLM call can see
+// the request hasn't stalled.
+func reportElapsed(w io.Writer, done <-chan struct{}) {
+	start := time.Now()
+	ticker := time.NewTicker(time.Second)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-done:
+			return
+		case <-ticker.C:
+			fmt.Fprintf(w, "\r  waiting... %-8s", time.Since(start).Round(time.Second))
+		}
+	}
 }
 
 func parseDayStart(s string) (time.Time, error) {
